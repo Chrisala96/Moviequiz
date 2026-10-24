@@ -1,0 +1,1138 @@
+<!doctype html>
+<html lang="de-CH">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#15110e">
+<meta name="description" content="Kleines Film-Quiz für den gemeinsamen Filmabend: ein paar Fragen, ein passender Film.">
+<title>Filmabend-Quiz</title>
+<style>
+:root{
+  --bg:#15110e;
+  --bg-glow:#2a1c10;
+  --surface:#211b17;
+  --surface-2:#2b241f;
+  --border:#3d332b;
+  --text:#f6efe7;
+  --muted:#bfb1a2;
+  --accent:#f4a340;
+  --accent-strong:#ffb95c;
+  --accent-ink:#1d1206;
+  --accent-soft:rgba(244,163,64,.14);
+  --focus:#ffd28f;
+  --radius:18px;
+  --radius-sm:12px;
+  --shadow:0 18px 40px rgba(0,0,0,.35);
+  --ease:cubic-bezier(.2,.7,.2,1);
+  --dur:.28s;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;min-height:100vh;min-height:100dvh;
+  background:radial-gradient(120% 70% at 50% -10%,var(--bg-glow) 0%,var(--bg) 60%) fixed,var(--bg);
+  color:var(--text);
+  font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+a{color:var(--accent-strong)}
+.wrap{max-width:640px;margin:0 auto;padding:max(20px,env(safe-area-inset-top)) 16px max(28px,env(safe-area-inset-bottom))}
+@media (min-width:900px){.wrap.wide{max-width:980px}}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+:focus-visible{outline:3px solid var(--focus);outline-offset:3px;border-radius:10px}
+h1,h2,h3{line-height:1.2;margin:0}
+h1{font-family:Georgia,"Times New Roman",serif;font-weight:700;letter-spacing:-.01em}
+h2{font-size:1.45rem}
+p{margin:0}
+
+/* Buttons */
+.btn{
+  appearance:none;border:0;cursor:pointer;font:inherit;font-weight:650;
+  display:inline-flex;align-items:center;justify-content:center;gap:.5em;
+  min-height:52px;padding:.8em 1.3em;border-radius:999px;text-decoration:none;
+  transition:transform var(--dur) var(--ease),background var(--dur),border-color var(--dur);
+}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:var(--accent);color:var(--accent-ink)}
+.btn-primary:hover{background:var(--accent-strong)}
+.btn-ghost{background:transparent;color:var(--text);border:1.5px solid var(--border)}
+.btn-ghost:hover{border-color:var(--accent)}
+.btn-small{min-height:44px;padding:.55em 1em;font-size:.95rem}
+.btn-block{width:100%}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.link-btn{background:none;border:0;color:var(--muted);font:inherit;cursor:pointer;padding:.6em .2em;min-height:44px;text-decoration:underline;text-underline-offset:3px}
+.link-btn:hover{color:var(--text)}
+
+/* Screens */
+.screen{animation:fadeIn var(--dur) var(--ease)}
+.screen[hidden]{display:none}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* Start */
+.hero{text-align:center;padding:9vh 0 2rem}
+.hero-icon{font-size:3rem;line-height:1;margin-bottom:1rem}
+.hero h1{font-size:clamp(2.1rem,8vw,3rem)}
+.hero p{color:var(--muted);margin:1rem auto 2rem;max-width:30ch;font-size:1.08rem}
+.hero .btn{min-width:min(100%,320px)}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px}
+.panel h2{font-size:1.05rem;margin-bottom:.35rem}
+.panel .hint{color:var(--muted);font-size:.92rem;margin-bottom:.9rem}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{
+  appearance:none;font:inherit;cursor:pointer;min-height:44px;padding:.5em .95em;border-radius:999px;
+  background:var(--surface-2);color:var(--text);border:1.5px solid var(--border);display:inline-flex;align-items:center;gap:.45em;
+  transition:border-color var(--dur),background var(--dur);
+}
+.chip[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.chip .tick{width:1.1em;text-align:center;color:var(--accent)}
+.start-actions{display:grid;gap:10px;margin-top:1.4rem}
+.fineprint{color:var(--muted);font-size:.85rem;margin-top:1.4rem;text-align:center}
+
+/* Quiz */
+.quiz-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.counter{color:var(--muted);font-size:.95rem;font-variant-numeric:tabular-nums}
+.progress{height:8px;background:var(--surface-2);border-radius:999px;overflow:hidden;margin-bottom:28px}
+.progress-bar{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent-strong));border-radius:inherit;transition:width .45s var(--ease)}
+.badge{display:inline-block;font-size:.78rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--accent-ink);background:var(--accent);padding:.25em .7em;border-radius:999px;margin-bottom:.8rem}
+.q-title{font-size:clamp(1.45rem,5.6vw,1.85rem);margin-bottom:.5rem}
+.q-sub{color:var(--muted);margin-bottom:1.4rem}
+.options{display:grid;gap:10px}
+@media (min-width:560px){.options.two-col{grid-template-columns:1fr 1fr}}
+.option{
+  appearance:none;font:inherit;color:var(--text);text-align:left;cursor:pointer;width:100%;
+  display:flex;align-items:center;gap:14px;min-height:64px;padding:14px 16px;
+  background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-sm);
+  transition:border-color var(--dur),background var(--dur),transform var(--dur) var(--ease);
+}
+.option:hover{border-color:#5c4b3d}
+.option:active{transform:scale(.99)}
+.option[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.option .emo{font-size:1.5rem;width:1.8rem;text-align:center;flex:none}
+.option .lbl{font-weight:650;display:block}
+.option .desc{display:block;color:var(--muted);font-size:.9rem;margin-top:2px}
+.option .check{margin-left:auto;flex:none;width:24px;height:24px;border-radius:7px;border:2px solid var(--border);display:grid;place-items:center;color:var(--accent-ink);font-size:.9rem;font-weight:800}
+.option[aria-pressed="true"] .check{background:var(--accent);border-color:var(--accent)}
+.q-note{color:var(--muted);font-size:.86rem;margin-top:1rem}
+.quiz-actions{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:1.5rem}
+
+/* Results */
+.res-head{text-align:center;margin:1rem 0 1.4rem}
+.res-head .kicker{color:var(--accent);font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-size:.82rem}
+.res-head h1{font-size:clamp(1.7rem,6vw,2.3rem);margin-top:.3rem}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.card-main{border:1.5px solid var(--accent);box-shadow:var(--shadow);background:linear-gradient(180deg,#2a2018 0%,var(--surface) 55%)}
+.card-body{padding:20px}
+.ribbon{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:.9rem}
+.match{font-weight:800;color:var(--accent-strong);font-variant-numeric:tabular-nums}
+.title{font-family:Georgia,"Times New Roman",serif;font-size:clamp(1.6rem,6.4vw,2.1rem)}
+.orig{color:var(--muted);font-size:.95rem;margin-top:.25rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 14px;color:var(--muted);font-size:.93rem;margin:.8rem 0 1rem}
+.meta span{white-space:nowrap}
+.desc{margin-bottom:1rem}
+.why{background:var(--accent-soft);border-left:3px solid var(--accent);border-radius:8px;padding:12px 14px;margin-bottom:1rem}
+.why strong{display:block;font-size:.82rem;letter-spacing:.05em;text-transform:uppercase;color:var(--accent-strong);margin-bottom:.2rem}
+.platform-note{color:var(--muted);font-size:.92rem;margin:-.3rem 0 1rem}
+.pill{display:inline-flex;align-items:center;gap:.4em;font-size:.85rem;font-weight:700;padding:.3em .75em;border-radius:999px;border:1px solid transparent}
+.pl-paramount{background:#0b2a66;color:#dfe9ff;border-color:#2e5fd1}
+.pl-netflix{background:#4a0b0e;color:#ffe3e4;border-color:#b3121b}
+.pl-disney{background:#14234f;color:#e2e8ff;border-color:#3e5ec4}
+.pl-youtube{background:#3f0d0d;color:#ffe5e5;border-color:#c4302b}
+.avail{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:.4rem}
+.avail-type{color:var(--muted);font-size:.9rem}
+.ratings{font-size:.93rem;margin:.8rem 0 .2rem}
+.ratings b{font-variant-numeric:tabular-nums}
+.small{color:var(--muted);font-size:.82rem}
+.actions{display:grid;gap:10px;margin-top:1.2rem}
+@media (min-width:480px){.actions{grid-template-columns:1fr 1fr}}
+.trailer{margin-top:14px}
+.trailer-frame{position:relative;aspect-ratio:16/9;border-radius:var(--radius-sm);overflow:hidden;background:#000}
+.trailer-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.trailer .small{margin-top:.5rem}
+.alts-title{font-size:1.1rem;margin:2rem 0 .8rem}
+.alts{display:grid;gap:12px}
+@media (min-width:900px){
+  .result-grid{display:grid;grid-template-columns:1.25fr 1fr;gap:24px;align-items:start}
+  .alts-title{margin-top:0}
+}
+.card-alt .card-body{padding:16px}
+.card-alt .title{font-size:1.3rem}
+.card-alt .meta{margin:.5rem 0 .7rem}
+.card-alt .desc{font-size:.95rem;margin-bottom:.7rem}
+.card-alt .why{padding:9px 12px;font-size:.93rem}
+.card-alt .actions{grid-template-columns:1fr;margin-top:.8rem}
+@media (min-width:480px){.card-alt .actions{grid-template-columns:1fr 1fr}}
+.card-alt .btn{min-height:46px;font-size:.92rem;padding:.55em .8em}
+.res-foot{margin-top:2rem;display:grid;gap:12px}
+details.info{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:4px 16px}
+details.info summary{cursor:pointer;min-height:48px;display:flex;align-items:center;font-weight:650}
+details.info p,details.info ul{color:var(--muted);font-size:.92rem;margin:0 0 .8rem}
+details.info ul{padding-left:1.2rem}
+.empty{text-align:center;padding:2rem 0}
+.empty p{color:var(--muted);margin:.8rem 0 1.4rem}
+.toast{position:fixed;left:50%;bottom:max(18px,env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--surface-2);border:1px solid var(--border);padding:.7em 1.1em;border-radius:999px;font-size:.92rem;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:opacity var(--dur)}
+.toast.show{opacity:1}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
+}
+</style>
+</head>
+<body>
+<div class="wrap" id="wrap">
+
+  <!-- Start -->
+  <main>
+  <section class="screen" id="screen-start" aria-labelledby="start-title">
+    <div class="hero">
+      <div class="hero-icon" aria-hidden="true">🎬</div>
+      <h1 id="start-title" tabindex="-1">Was schauen wir heute?</h1>
+      <p>Ein paar kurze Fragen – und ihr bekommt einen Film, der zu eurem Abend passt.</p>
+      <button class="btn btn-primary" type="button" id="btn-start">Film für heute finden</button>
+      <div class="start-actions" id="resume-wrap" hidden>
+        <button class="btn btn-ghost" type="button" id="btn-resume">Letztes Ergebnis ansehen</button>
+      </div>
+    </div>
+
+    <div class="panel" role="group" aria-labelledby="pf-title">
+      <h2 id="pf-title">Unsere Plattformen heute</h2>
+      <p class="hint">Abwählen, was heute nicht in Frage kommt. Reihenfolge = Priorität.</p>
+      <div class="chips" id="platform-chips"></div>
+    </div>
+
+    <p class="fineprint">Eure Antworten bleiben in diesem Browser – es wird nichts an einen Server gesendet.</p>
+  </section>
+
+  <!-- Quiz -->
+  <section class="screen" id="screen-quiz" aria-labelledby="q-title" hidden>
+    <div class="quiz-top">
+      <button class="link-btn" type="button" id="btn-back">← Zurück</button>
+      <span class="counter" id="q-counter" aria-live="polite"></span>
+    </div>
+    <div class="progress" role="progressbar" aria-label="Fortschritt" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progress">
+      <div class="progress-bar" id="progress-bar"></div>
+    </div>
+    <div id="q-area"></div>
+    <div class="quiz-actions">
+      <button class="link-btn" type="button" id="btn-restart-quiz">Quiz neu starten</button>
+      <button class="btn btn-primary btn-small" type="button" id="btn-next" hidden>Weiter</button>
+    </div>
+  </section>
+
+  <!-- Result -->
+  <section class="screen" id="screen-result" aria-labelledby="res-title" hidden>
+    <div id="res-area"></div>
+  </section>
+  </main>
+
+  <noscript>
+    <p style="text-align:center;padding:2rem">Für das Quiz muss JavaScript im Browser aktiviert sein.</p>
+  </noscript>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+"use strict";
+/* =====================================================================
+   FILMDATEN
+   Verfügbarkeit, Laufzeit, Altersfreigabe und Bewertungen wurden am
+   24.10.2026 auf JustWatch Schweiz (justwatch.com/ch) geprüft.
+   Felder, die nicht verifiziert werden konnten, sind null und werden
+   in der App nicht angezeigt.
+
+   Redaktionelle Einschätzungen (für das Punktesystem, nicht recherchiert):
+   moods     fun | tense | dark | clever | surprise | nerve
+   genres    action | crime | scifi | spooky | comedy
+   intensity 1 entspannt … 3 richtig packend
+   horror    0 keiner … 3 stark/blutig
+   twist     0 keine … 2 zentrale Wendung
+   serious   0 leicht … 2 schweres Thema
+
+   availability: platform = paramount | netflix | disney | youtube
+                 type     = abo | free | rent | buy  (price nur, wenn geprüft)
+   trailerId:   nur gesetzt, wenn das Video per YouTube-oEmbed als offizieller
+                Trailer auf dem Kanal des Studios bestätigt wurde.
+   audioDe:     true nur, wenn JustWatch CH für unsere Plattform eine
+                deutsche Tonspur listet; sonst null (= nicht geprüft).
+   ===================================================================== */
+const CHECKED = "2026-10-24";
+const RATING_SOURCE = "JustWatch CH";
+
+const PLATFORMS = {
+  paramount: { name: "Paramount+", prio: 1, cls: "pl-paramount", bonus: 3 },
+  netflix:   { name: "Netflix",    prio: 2, cls: "pl-netflix",   bonus: 2 },
+  disney:    { name: "Disney+",    prio: 3, cls: "pl-disney",    bonus: 1 },
+  youtube:   { name: "YouTube",    prio: 4, cls: "pl-youtube",   bonus: 0 }
+};
+
+const FILMS = [
+  { id:"no-country", title:"No Country for Old Men", originalTitle:null, year:2007, runtime:122, genreLabel:"Krimi · Thriller · Neo-Western", fsk:16,
+    desc:"Ein Jäger stösst in Westtexas auf ein missglücktes Drogengeschäft und nimmt zwei Millionen Dollar mit – und hat bald einen gnadenlosen Killer auf den Fersen.",
+    moods:["tense","dark"], genres:["crime"], intensity:3, horror:1, twist:1, serious:2, origLang:"en",
+    imdb:8.2, rt:93, audioDe:null, justwatch:"No-Country-for-Old-Men", trailerId:null,
+    availability:[{platform:"paramount",type:"abo"},{platform:"netflix",type:"abo"}], availabilityChecked:CHECKED },
+  { id:"zwielicht", title:"Zwielicht", originalTitle:"Primal Fear", year:1996, runtime:130, genreLabel:"Gerichtsthriller · Krimi", fsk:16,
+    desc:"Ein ehrgeiziger Staranwalt verteidigt einen jungen Messdiener, der einen Erzbischof ermordet haben soll – ein Fall, der ihn mehr fordert als gedacht.",
+    moods:["tense","clever","surprise"], genres:["crime"], intensity:2, horror:0, twist:2, serious:1, origLang:"en",
+    imdb:7.7, rt:77, audioDe:null, justwatch:"Zwielicht", trailerId:null,
+    availability:[{platform:"paramount",type:"abo"}], availabilityChecked:CHECKED },
+  { id:"minority-report", title:"Minority Report", originalTitle:null, year:2002, runtime:145, genreLabel:"Science-Fiction · Action · Krimi", fsk:12,
+    desc:"Im Jahr 2054 verhaftet eine Spezialeinheit Mörder, bevor sie zuschlagen. Dann sieht ihr Chef sich selbst in einer Vision als künftigen Täter.",
+    moods:["tense","clever"], genres:["scifi","action","crime"], intensity:2, horror:0, twist:1, serious:1, origLang:"en",
+    imdb:7.6, rt:89, audioDe:null, justwatch:"Minority-Report", trailerId:null,
+    availability:[{platform:"paramount",type:"abo"}], availabilityChecked:CHECKED },
+  { id:"boy-kills-world", title:"Boy Kills World", originalTitle:null, year:2024, runtime:111, genreLabel:"Action · schwarze Komödie", fsk:null,
+    desc:"Ein gehörloser Waise wird zur Kampfmaschine ausgebildet und zieht los, um sich an der Herrscherfamilie zu rächen. Laut, brutal und herrlich überdreht.",
+    moods:["fun","nerve"], genres:["action","comedy"], intensity:3, horror:2, twist:1, serious:0, origLang:"en",
+    imdb:6.4, rt:59, audioDe:null, justwatch:"boy-kills-world", trailerId:null,
+    availability:[{platform:"paramount",type:"abo"}], availabilityChecked:CHECKED },
+  { id:"die-firma", title:"Die Firma", originalTitle:"The Firm", year:1993, runtime:154, genreLabel:"Thriller · Krimi", fsk:16,
+    desc:"Ein junger Anwalt bekommt den Traumjob in einer noblen Kanzlei – bis er merkt, dass sie Geld für die Mafia wäscht und ein Ausstieg nicht mehr so einfach ist.",
+    moods:["tense","clever"], genres:["crime"], intensity:2, horror:0, twist:0, serious:1, origLang:"en",
+    imdb:6.9, rt:77, audioDe:null, justwatch:"Die-Firma", trailerId:null,
+    availability:[{platform:"paramount",type:"abo"},{platform:"netflix",type:"abo"}], availabilityChecked:CHECKED },
+  { id:"incendies", title:"Die Frau, die singt – Incendies", originalTitle:"Incendies", year:2010, runtime:131, genreLabel:"Mystery-Drama", fsk:14,
+    desc:"Ein Zwillingspaar aus Montreal erfährt aus dem Testament der Mutter von einem unbekannten Bruder. Die Suche führt in den Nahen Osten und tief in die Familiengeschichte.",
+    moods:["dark","surprise"], genres:["spooky"], intensity:3, horror:0, twist:2, serious:2, origLang:"fr",
+    imdb:8.3, rt:91, audioDe:null, justwatch:"Die-Frau-die-singt-Incendies", trailerId:null,
+    availability:[{platform:"paramount",type:"abo"}], availabilityChecked:CHECKED },
+  { id:"truman-show", title:"Die Truman Show", originalTitle:"The Truman Show", year:1998, runtime:103, genreLabel:"Satire · Drama", fsk:12,
+    desc:"Truman führt ein perfektes Kleinstadtleben – ohne zu ahnen, dass er seit seiner Geburt der Star einer Rund-um-die-Uhr-Fernsehshow ist.",
+    moods:["fun","clever"], genres:["comedy","scifi"], intensity:1, horror:0, twist:1, serious:1, origLang:"en",
+    imdb:8.2, rt:94, audioDe:null, justwatch:"Die-Truman-Show", trailerId:null,
+    availability:[{platform:"paramount",type:"abo"},{platform:"netflix",type:"abo"}], availabilityChecked:CHECKED },
+  { id:"from-dusk", title:"From Dusk Till Dawn", originalTitle:null, year:1996, runtime:108, genreLabel:"Action · Krimi · Horror", fsk:18,
+    desc:"Zwei Gangsterbrüder nehmen auf der Flucht nach Mexiko eine Familie als Geiseln und landen in einer Bar, in der die Nacht völlig anders verläuft als geplant.",
+    moods:["fun","nerve","surprise"], genres:["action","spooky","comedy"], intensity:3, horror:3, twist:2, serious:0, origLang:"en",
+    imdb:7.2, rt:65, audioDe:null, justwatch:"From-Dusk-Till-Dawn", trailerId:null,
+    availability:[{platform:"paramount",type:"abo"}], availabilityChecked:CHECKED },
+  { id:"tropic-thunder", title:"Tropic Thunder", originalTitle:null, year:2008, runtime:107, genreLabel:"Action-Komödie · Satire", fsk:16,
+    desc:"Eine Truppe eitler Hollywoodstars dreht im Dschungel einen Kriegsfilm – und merkt zu spät, dass die Gefahr um sie herum echt ist.",
+    moods:["fun"], genres:["action","comedy"], intensity:1, horror:0, twist:0, serious:0, origLang:"en",
+    imdb:7.1, rt:82, audioDe:null, justwatch:"Tropic-Thunder", trailerId:null,
+    availability:[{platform:"paramount",type:"abo"}], availabilityChecked:CHECKED },
+  { id:"quiet-place", title:"A Quiet Place", originalTitle:null, year:2018, runtime:90, genreLabel:"Horror · Science-Fiction · Thriller", fsk:null,
+    desc:"Eine Familie überlebt in einer verwüsteten Welt nur, solange sie keinen Laut von sich gibt – denn draussen lauern Wesen, die auf jedes Geräusch reagieren.",
+    moods:["tense","nerve"], genres:["spooky","scifi"], intensity:3, horror:2, twist:0, serious:1, origLang:"en",
+    imdb:7.5, rt:96, audioDe:null, justwatch:"A-Quiet-Place", trailerId:"WR7cc5t7tv8",
+    availability:[{platform:"paramount",type:"abo"}], availabilityChecked:CHECKED },
+  { id:"exhuma", title:"Exhuma", originalTitle:"파묘 (Pamyo)", year:2024, runtime:134, genreLabel:"Mystery · Horror", fsk:16,
+    desc:"Eine reiche Familie leidet unter unheimlichen Vorfällen. Eine Schamanin und ein Geomant sollen das Grab eines Ahnen in Korea umbetten – mit unerwarteten Folgen.",
+    moods:["dark","nerve","surprise"], genres:["spooky"], intensity:2, horror:2, twist:1, serious:1, origLang:"ko",
+    imdb:6.9, rt:93, audioDe:null, justwatch:"exhuma", trailerId:null,
+    availability:[{platform:"paramount",type:"abo"}], availabilityChecked:CHECKED },
+  { id:"nackte-kanone", title:"Die nackte Kanone", originalTitle:"The Naked Gun", year:2025, runtime:85, genreLabel:"Krimikomödie · Slapstick", fsk:14,
+    desc:"Frank Drebin Jr. tritt in die Fussstapfen seines Vaters und stolpert mit todernster Miene durch einen Kriminalfall voller Slapstick.",
+    moods:["fun"], genres:["comedy","crime","action"], intensity:1, horror:0, twist:0, serious:0, origLang:"en",
+    imdb:6.3, rt:88, audioDe:null, justwatch:"the-naked-gun", trailerId:null,
+    availability:[{platform:"paramount",type:"abo"}], availabilityChecked:CHECKED },
+
+  { id:"predestination", title:"Predestination", originalTitle:null, year:2014, runtime:98, genreLabel:"Science-Fiction · Mystery-Thriller", fsk:null,
+    desc:"Ein Zeitreise-Agent trifft bei seinem letzten Einsatz auf einen Fremden mit einer unglaublichen Lebensgeschichte – und alles hängt mit allem zusammen.",
+    moods:["clever","surprise"], genres:["scifi","spooky"], intensity:2, horror:0, twist:2, serious:1, origLang:"en",
+    imdb:7.4, rt:84, audioDe:null, justwatch:"Predestination", trailerId:null,
+    availability:[{platform:"netflix",type:"abo"}], availabilityChecked:CHECKED },
+  { id:"mickey-17", title:"Mickey 17", originalTitle:null, year:2025, runtime:137, genreLabel:"Science-Fiction · schwarze Komödie", fsk:12,
+    desc:"Mickey übernimmt bei einer Weltraumkolonie die tödlichsten Jobs und wird nach jedem Tod einfach neu gedruckt – bis etwas schiefläuft.",
+    moods:["fun","clever"], genres:["scifi","comedy"], intensity:1, horror:0, twist:0, serious:1, origLang:"en",
+    imdb:6.7, rt:77, audioDe:null, justwatch:"mickey-17", trailerId:"osYpGSz_0i4",
+    availability:[{platform:"netflix",type:"abo"}], availabilityChecked:CHECKED },
+  { id:"sieben", title:"Sieben", originalTitle:"Se7en", year:1995, runtime:127, genreLabel:"Krimi · Psychothriller", fsk:16,
+    desc:"Zwei ungleiche Detectives jagen einen Serienmörder, der seine Taten nach den sieben Todsünden inszeniert.",
+    moods:["dark","tense","nerve"], genres:["crime","spooky"], intensity:3, horror:2, twist:2, serious:2, origLang:"en",
+    imdb:8.6, rt:null, audioDe:null, justwatch:"Sieben", trailerId:null,
+    availability:[{platform:"netflix",type:"abo"}], availabilityChecked:CHECKED },
+  { id:"nocturnal-animals", title:"Nocturnal Animals", originalTitle:null, year:2016, runtime:115, genreLabel:"Psychothriller · Drama", fsk:null,
+    desc:"Eine Galeristin erhält das Romanmanuskript ihres Ex-Mannes – eine verstörende Geschichte, die sie nicht mehr loslässt.",
+    moods:["dark","tense"], genres:["crime"], intensity:3, horror:1, twist:1, serious:2, origLang:"en",
+    imdb:7.5, rt:74, audioDe:null, justwatch:"Nocturnal-Animals", trailerId:null,
+    availability:[{platform:"netflix",type:"abo"}], availabilityChecked:CHECKED },
+  { id:"edge-of-tomorrow", title:"Edge of Tomorrow – Live. Die. Repeat.", originalTitle:"Edge of Tomorrow", year:2014, runtime:114, genreLabel:"Science-Fiction · Action", fsk:14,
+    desc:"Ein unerfahrener Offizier stirbt im Kampf gegen Aliens – und erlebt denselben Tag immer wieder. Jeder Durchgang macht ihn ein bisschen besser.",
+    moods:["fun","tense"], genres:["action","scifi"], intensity:2, horror:0, twist:0, serious:0, origLang:"en",
+    imdb:7.9, rt:91, audioDe:null, justwatch:"Edge-of-Tomorrow", trailerId:"yUmSVcttXnI",
+    availability:[{platform:"netflix",type:"abo"}], availabilityChecked:CHECKED },
+  { id:"companion", title:"Companion – Die perfekte Begleitung", originalTitle:"Companion", year:2025, runtime:97, genreLabel:"Sci-Fi-Thriller · schwarzer Humor", fsk:null,
+    desc:"Iris verbringt ein Wochenende mit ihrem Freund und dessen Clique in einem abgelegenen Seehaus. Dann kippt die Stimmung – und nichts ist, wie es scheint.",
+    moods:["surprise","dark"], genres:["scifi","spooky","comedy"], intensity:2, horror:1, twist:2, serious:0, origLang:"en",
+    imdb:6.9, rt:93, audioDe:null, justwatch:"companion", trailerId:null,
+    availability:[{platform:"netflix",type:"abo"}], availabilityChecked:CHECKED },
+  { id:"argo", title:"Argo", originalTitle:null, year:2012, runtime:120, genreLabel:"Polit-Thriller · nach wahren Begebenheiten", fsk:12,
+    desc:"1979 in Teheran: Ein CIA-Spezialist will sechs untergetauchte US-Diplomaten mit einer abenteuerlichen Tarnung herausholen – als Filmcrew.",
+    moods:["tense","clever"], genres:["crime"], intensity:2, horror:0, twist:0, serious:1, origLang:"en",
+    imdb:7.7, rt:96, audioDe:null, justwatch:"Argo", trailerId:null,
+    availability:[{platform:"netflix",type:"abo"}], availabilityChecked:CHECKED },
+  { id:"mr-no-pain", title:"Mr. No Pain", originalTitle:"Novocaine", year:2025, runtime:110, genreLabel:"Action-Komödie", fsk:16,
+    desc:"Der harmlose Bankangestellte Nate kann keinen Schmerz spüren. Als seine Kollegin entführt wird, macht er das zu seiner Superkraft.",
+    moods:["fun","nerve"], genres:["action","comedy"], intensity:2, horror:1, twist:0, serious:0, origLang:"en",
+    imdb:6.5, rt:81, audioDe:null, justwatch:"mr-no-pain", trailerId:null,
+    availability:[{platform:"netflix",type:"abo"}], availabilityChecked:CHECKED },
+  { id:"blade-runner-2049", title:"Blade Runner 2049", originalTitle:null, year:2017, runtime:164, genreLabel:"Science-Fiction · Neo-Noir", fsk:16,
+    desc:"Replikantenjäger K stösst auf ein lange verborgenes Geheimnis, das die Ordnung seiner Welt ins Wanken bringen könnte.",
+    moods:["clever","dark"], genres:["scifi","spooky"], intensity:2, horror:0, twist:1, serious:2, origLang:"en",
+    imdb:8.0, rt:85, audioDe:null, justwatch:"Blade-Runner-2049", trailerId:"gCcx85zbxz4",
+    availability:[{platform:"netflix",type:"abo"}], availabilityChecked:CHECKED },
+  { id:"tenet", title:"Tenet", originalTitle:null, year:2020, runtime:150, genreLabel:"Action · Science-Fiction · Agententhriller", fsk:12,
+    desc:"Ein Agent soll einen Krieg verhindern, in dem die Zeit selbst zur Waffe wird – ein Action-Rätsel zum Mitdenken.",
+    moods:["clever","tense"], genres:["action","scifi"], intensity:2, horror:0, twist:1, serious:0, origLang:"en",
+    imdb:7.3, rt:70, audioDe:null, justwatch:"Tenet", trailerId:"LdOM0x0XDMo",
+    availability:[{platform:"netflix",type:"abo"}], availabilityChecked:CHECKED },
+  { id:"nerve", title:"Nerve", originalTitle:null, year:2016, runtime:96, genreLabel:"Thriller", fsk:12,
+    desc:"Eine schüchterne Schülerin macht bei einem Online-Spiel mit, in dem Zuschauer immer riskantere Mutproben bestimmen. Aussteigen ist schwieriger als gedacht.",
+    moods:["tense","nerve"], genres:["crime"], intensity:2, horror:0, twist:0, serious:0, origLang:"en",
+    imdb:6.5, rt:66, audioDe:null, justwatch:"Nerve", trailerId:null,
+    availability:[{platform:"netflix",type:"abo"}], availabilityChecked:CHECKED },
+
+  { id:"the-menu", title:"The Menu", originalTitle:null, year:2022, runtime:107, genreLabel:"Thriller · schwarze Komödie", fsk:16,
+    desc:"Ein Paar reist auf eine abgelegene Insel, um im exklusivsten Restaurant der Welt zu essen. Der Starkoch hat für den Abend ein ganz besonderes Menü vorbereitet.",
+    moods:["dark","surprise","clever"], genres:["comedy","spooky"], intensity:2, horror:1, twist:1, serious:1, origLang:"en",
+    imdb:7.1, rt:88, audioDe:true, justwatch:"The-Menu", trailerId:"C_uTkUGcHv4",
+    availability:[{platform:"disney",type:"abo"}], availabilityChecked:CHECKED },
+  { id:"get-out", title:"Get Out", originalTitle:null, year:2017, runtime:104, genreLabel:"Horror-Thriller · Satire", fsk:16,
+    desc:"Chris besucht zum ersten Mal die Familie seiner Freundin auf dem Land. Die Gastgeber sind überaus freundlich – fast zu freundlich.",
+    moods:["nerve","surprise","clever"], genres:["spooky","comedy"], intensity:2, horror:2, twist:2, serious:1, origLang:"en",
+    imdb:7.8, rt:98, audioDe:true, justwatch:"Get-Out", trailerId:null,
+    availability:[{platform:"disney",type:"abo"}], availabilityChecked:CHECKED },
+  { id:"underwater", title:"Underwater – Es ist erwacht", originalTitle:"Underwater", year:2020, runtime:95, genreLabel:"Sci-Fi-Horror · Action", fsk:null,
+    desc:"Nach einem Erdbeben am Meeresgrund muss sich eine kleine Crew durch eine zerstörte Tiefseestation kämpfen. Doch nicht nur der Wasserdruck ist eine Gefahr.",
+    moods:["nerve","tense"], genres:["action","scifi","spooky"], intensity:3, horror:2, twist:0, serious:0, origLang:"en",
+    imdb:5.9, rt:48, audioDe:true, justwatch:"Underwater-Es-ist-erwacht", trailerId:null,
+    availability:[{platform:"disney",type:"abo"}], availabilityChecked:CHECKED },
+  { id:"le-mans-66", title:"Le Mans 66 – Gegen jede Chance", originalTitle:"Ford v Ferrari", year:2019, runtime:153, genreLabel:"Action · Drama · nach wahren Begebenheiten", fsk:12,
+    desc:"Autobauer Carroll Shelby und der kompromisslose Fahrer Ken Miles sollen für Ford einen Rennwagen bauen, der Ferrari in Le Mans schlägt.",
+    moods:["tense","fun"], genres:["action"], intensity:2, horror:0, twist:0, serious:1, origLang:"en",
+    imdb:8.1, rt:92, audioDe:true, justwatch:"Le-Mans-66-Gegen-jede-Chance", trailerId:"zyYgDtY2AMY",
+    availability:[{platform:"disney",type:"abo"}], availabilityChecked:CHECKED },
+  { id:"marsianer", title:"Der Marsianer – Rettet Mark Watney", originalTitle:"The Martian", year:2015, runtime:141, genreLabel:"Science-Fiction · Abenteuer", fsk:null,
+    desc:"Nach einem Sturm wird Astronaut Mark Watney auf dem Mars zurückgelassen. Mit Wissenschaft, Erfindergeist und Galgenhumor kämpft er ums Überleben.",
+    moods:["fun","clever"], genres:["scifi"], intensity:1, horror:0, twist:0, serious:0, origLang:"en",
+    imdb:8.0, rt:91, audioDe:true, justwatch:"Der-Marsianer-Rettet-Mark-Watney", trailerId:"ej3ioOneTy8",
+    availability:[{platform:"disney",type:"abo"}], availabilityChecked:CHECKED },
+  { id:"send-help", title:"Send Help", originalTitle:null, year:2026, runtime:113, genreLabel:"Survival-Thriller · schwarze Komödie", fsk:16,
+    desc:"Eine unterschätzte Angestellte und ihr fieser Chef überleben als Einzige einen Flugzeugabsturz auf einer einsamen Insel. Wer hat jetzt das Sagen?",
+    moods:["fun","dark","surprise"], genres:["comedy","spooky"], intensity:2, horror:2, twist:1, serious:0, origLang:"en",
+    imdb:6.7, rt:92, audioDe:true, justwatch:"send-help", trailerId:null,
+    availability:[{platform:"disney",type:"abo"}], availabilityChecked:CHECKED },
+  { id:"predator-badlands", title:"Predator: Badlands", originalTitle:null, year:2025, runtime:107, genreLabel:"Science-Fiction · Action", fsk:16,
+    desc:"Ein junger, von seinem Clan verstossener Predator muss auf einem lebensfeindlichen Planeten bestehen – und findet eine unerwartete Verbündete.",
+    moods:["fun","tense"], genres:["action","scifi"], intensity:2, horror:1, twist:0, serious:0, origLang:"en",
+    imdb:7.2, rt:86, audioDe:true, justwatch:"predator-badlands", trailerId:"43R9l7EkJwE",
+    availability:[{platform:"disney",type:"abo"}], availabilityChecked:CHECKED },
+  { id:"john-wick", title:"John Wick", originalTitle:null, year:2014, runtime:101, genreLabel:"Action · Krimi", fsk:16,
+    desc:"Ein ehemaliger Auftragskiller wollte nur in Ruhe trauern. Als ihm Gangster das Letzte nehmen, was ihm geblieben ist, kehrt er zurück.",
+    moods:["tense","nerve"], genres:["action","crime"], intensity:3, horror:1, twist:0, serious:0, origLang:"en",
+    imdb:7.5, rt:87, audioDe:true, justwatch:"John-Wick", trailerId:null,
+    availability:[{platform:"disney",type:"abo"}], availabilityChecked:CHECKED },
+  { id:"sixth-sense", title:"The Sixth Sense – Nicht jede Gabe ist ein Segen", originalTitle:"The Sixth Sense", year:1999, runtime:107, genreLabel:"Mystery-Thriller", fsk:16,
+    desc:"Ein Kinderpsychologe versucht einem verängstigten Jungen zu helfen, der behauptet, Tote zu sehen.",
+    moods:["surprise","clever","dark"], genres:["spooky"], intensity:2, horror:1, twist:2, serious:1, origLang:"en",
+    imdb:8.2, rt:86, audioDe:true, justwatch:"The-Sixth-Sense", trailerId:null,
+    availability:[{platform:"netflix",type:"abo"},{platform:"disney",type:"abo"}], availabilityChecked:CHECKED }
+];
+
+/* =====================================================================
+   FRAGEN
+   ===================================================================== */
+const LABELS = {
+  mood:{fun:"locker & unterhaltsam",tense:"spannend",dark:"düster",clever:"clever",surprise:"überraschend",nerve:"nervenaufreibend"},
+  genre:{action:"Action",crime:"Krimi & Thriller",scifi:"Science-Fiction",spooky:"Mystery & Grusel",comedy:"schwarzer Humor"}
+};
+
+const QUESTIONS = {
+  mood:{
+    title:"Worauf habt ihr heute Lust?",
+    sub:"Die Grundstimmung für euren Abend.",
+    twoCol:true,
+    options:[
+      {v:"fun",l:"Locker & unterhaltsam",e:"🍿"},
+      {v:"tense",l:"Spannend",e:"⏱️"},
+      {v:"dark",l:"Düster",e:"🌒"},
+      {v:"clever",l:"Clever – zum Mitdenken",e:"🧩"},
+      {v:"surprise",l:"Überraschend",e:"🎁"},
+      {v:"nerve",l:"Nervenaufreibend",e:"💓"},
+      {v:"any",l:"Überrasch uns",e:"🎲"}
+    ]
+  },
+  genre:{
+    title:(a)=> a.mood==="fun" ? "Welcher Mix bringt euch zum Grinsen?"
+              : a.mood==="clever" ? "In welcher Welt soll geknobelt werden?"
+              : (a.mood==="dark"||a.mood==="nerve") ? "Woher soll die Gänsehaut kommen?"
+              : "Welche Richtung soll es sein?",
+    sub:"Wählt das, was euch heute am meisten anspricht.",
+    options:(a)=>{
+      const base=[
+        {v:"action",l:"Action",d:"Tempo, Verfolgungsjagden, Showdowns",e:"💥"},
+        {v:"crime",l:"Krimi & Thriller",d:"Verbrechen, Verschwörungen, Katz und Maus",e:"🕵️"},
+        {v:"scifi",l:"Science-Fiction",d:"Zukunft, Zeitschleifen, fremde Welten",e:"🚀"},
+        {v:"spooky",l:"Mystery & Grusel",d:"Rätselhaftes und Unheimliches",e:"🕯️"},
+        {v:"comedy",l:"Mit schwarzem Humor",d:"Genre-Mix mit bissigen Lachern",e:"😏"}
+      ];
+      const order={fun:["comedy","action","scifi","crime","spooky"],clever:["scifi","crime","spooky","comedy","action"],
+                   dark:["crime","spooky","scifi","action","comedy"],nerve:["spooky","crime","action","scifi","comedy"]}[a.mood];
+      const sorted=order? order.map(v=>base.find(o=>o.v===v)) : base;
+      return sorted.concat([{v:"any",l:"Egal – Hauptsache gut",e:"🎲"}]);
+    }
+  },
+  intensity:{
+    title:"Wie viel Puls darf's sein?",
+    sub:"Von gemütlich bis Fingernägel-Kauen.",
+    options:[
+      {v:"1",l:"Eher entspannt",d:"Sofa-Modus, gut nebenbei zu geniessen",e:"🛋️"},
+      {v:"2",l:"Mittel",d:"Mitfiebern ja, Herzrasen nein",e:"🙂"},
+      {v:"3",l:"Richtig packend",d:"Wir wollen gefesselt werden",e:"🔥"},
+      {v:"any",l:"Egal",e:"🎲"}
+    ]
+  },
+  horror:{
+    title:"Wie steht ihr zu Horror und Schockmomenten?",
+    sub:"Ehrlich sein – es soll ja beiden gefallen.",
+    options:[
+      {v:"yes",l:"Gerne – wir mögen's gruselig",e:"👻"},
+      {v:"some",l:"Ein bisschen Nervenkitzel ist okay",e:"😬"},
+      {v:"none",l:"Bitte keine Schocks",e:"🙈"}
+    ]
+  },
+  runtime:{
+    title:"Wie viel Zeit habt ihr heute?",
+    sub:"Inklusive Popcorn-Holen.",
+    options:[
+      {v:"short",l:"Eher kurz",d:"bis etwa 1 h 45",e:"⏳"},
+      {v:"medium",l:"Bis etwa 2 Stunden",e:"🕗"},
+      {v:"any",l:"Länge egal",e:"♾️"}
+    ]
+  },
+  twist:{
+    followup:true,
+    title:"Wie wichtig ist euch eine überraschende Wendung?",
+    sub:"Damit wir zwischen ein paar guten Kandidaten entscheiden können.",
+    options:[
+      {v:"high",l:"Sehr wichtig – überrascht uns!",e:"🌀"},
+      {v:"some",l:"Wäre nett",e:"👌"},
+      {v:"any",l:"Nicht so wichtig",e:"🤷"}
+    ]
+  },
+  tone:{
+    followup:true,
+    title:"Leichtes oder ernstes Thema?",
+    sub:"Damit wir zwischen ein paar guten Kandidaten entscheiden können.",
+    options:[
+      {v:"light",l:"Heute lieber leicht",e:"🎈"},
+      {v:"serious",l:"Darf ruhig ernst und schwer sein",e:"🎻"},
+      {v:"any",l:"Beides okay",e:"🤷"}
+    ]
+  },
+  era:{
+    followup:true,
+    title:"Neuer Film oder Klassiker?",
+    sub:"Damit wir zwischen ein paar guten Kandidaten entscheiden können.",
+    options:[
+      {v:"new",l:"Eher neu",d:"ab 2015",e:"✨"},
+      {v:"classic",l:"Gern ein Klassiker",d:"vor 2010",e:"📼"},
+      {v:"any",l:"Egal",e:"🤷"}
+    ]
+  },
+  lang:{
+    followup:true,
+    title:"Wie schaut ihr am liebsten?",
+    sub:"Hinweis: Deutsche Tonspuren sind nur teilweise geprüft, Untertitel gar nicht – das fliesst deshalb nur leicht ein.",
+    options:[
+      {v:"de",l:"Deutsche Synchronisation",e:"🇩🇪"},
+      {v:"ov",l:"Originalton mit Untertiteln",e:"🎧"},
+      {v:"any",l:"Egal",e:"🤷"}
+    ]
+  },
+  seen:{
+    multi:true,
+    title:"Habt ihr davon schon etwas gesehen?",
+    sub:"Das sind eure aktuell besten Treffer. Tippt an, was eine oder beide von euch schon kennen – wir schlagen es dann nicht vor.",
+    note:"Nichts davon gesehen? Einfach auf „Ergebnis zeigen“ tippen."
+  }
+};
+const FOLLOWUPS=["twist","tone","era","lang"];
+const MAX_FOLLOWUPS=2;
+
+/* =====================================================================
+   PUNKTESYSTEM
+   Jede beantwortete Frage liefert Passungspunkte (pts) und ein Maximum
+   (max). Passung % = Summe pts / Summe max. Der Gesamtscore addiert eine
+   kleine Qualitätskomponente (IMDb/RT) und einen sehr kleinen
+   Plattform-Bonus, der nur bei ähnlich guten Filmen den Ausschlag gibt.
+   ===================================================================== */
+const SCORERS = {
+  mood(f,v){
+    if(v==="any") return {pts:10,max:10};
+    const hit=f.moods.includes(v);
+    return {pts:hit?25:0,max:25,reason:hit?{k:"mood",w:25}:null};
+  },
+  genre(f,v){
+    if(v==="any") return {pts:10,max:10};
+    const hit=f.genres.includes(v);
+    const main=f.genres[0]===v;
+    return {pts:hit?(main?25:20):0,max:25,reason:hit?{k:"genre",w:22}:null};
+  },
+  intensity(f,v){
+    if(v==="any") return {pts:8,max:8};
+    const d=Math.abs(f.intensity-Number(v));
+    return {pts:d===0?15:d===1?6:-8,max:15,reason:d===0?{k:"intensity",w:12}:null};
+  },
+  horror(f,v){
+    const h=f.horror;
+    if(v==="none"){const p=[10,3,-15,-30][h];return {pts:p,max:10,reason:h===0?{k:"noHorror",w:9}:null};}
+    if(v==="some"){const p=[7,8,3,-8][h];return {pts:p,max:8,reason:h===1?{k:"someHorror",w:6}:null};}
+    const p=[-2,4,12,12][h];return {pts:p,max:12,reason:h>=2?{k:"yesHorror",w:10}:null};
+  },
+  runtime(f,v){
+    const r=f.runtime;
+    if(v==="short"){const p=r<=105?10:r<=120?2:-12;return {pts:p,max:10,reason:r<=105?{k:"runtime",w:7}:null};}
+    if(v==="medium"){const p=r<=125?8:r<=140?0:-10;return {pts:p,max:8,reason:r<=125?{k:"runtime",w:6}:null};}
+    return {pts:5,max:5};
+  },
+  twist(f,v){
+    if(v==="high"){const p=[-6,4,12][f.twist];return {pts:p,max:12,reason:f.twist===2?{k:"twist",w:11}:null};}
+    if(v==="some"){const p=[0,5,5][f.twist];return {pts:p,max:5,reason:f.twist>=1?{k:"twistSome",w:4}:null};}
+    return {pts:0,max:0};
+  },
+  tone(f,v){
+    if(v==="light"){const p=[10,2,-12][f.serious];return {pts:p,max:10,reason:f.serious===0?{k:"light",w:8}:null};}
+    if(v==="serious"){const p=[0,6,6][f.serious];return {pts:p,max:6,reason:f.serious>=1?{k:"serious",w:5}:null};}
+    return {pts:0,max:0};
+  },
+  era(f,v){
+    if(v==="new"){const ok=f.year>=2015;return {pts:ok?8:0,max:8,reason:ok?{k:"new",w:5}:null};}
+    if(v==="classic"){const ok=f.year<2010;return {pts:ok?8:0,max:8,reason:ok?{k:"classic",w:5}:null};}
+    return {pts:0,max:0};
+  },
+  lang(f,v){
+    if(v==="de"){const ok=f.audioDe===true;return {pts:ok?4:0,max:4,reason:ok?{k:"audioDe",w:3}:null};}
+    if(v==="ov"){const ok=f.origLang!=="en";return {pts:ok?3:0,max:3,reason:ok?{k:"ov",w:3}:null};}
+    return {pts:0,max:0};
+  }
+};
+
+function qualityScore(f){
+  let q=(f.imdb-6.5)*4;
+  if(f.rt!=null&&f.rt>=90) q+=1.5;
+  return q;
+}
+
+function primaryAvailability(f,platforms){
+  const opts=f.availability.filter(a=>platforms.includes(a.platform))
+    .sort((a,b)=>PLATFORMS[a.platform].prio-PLATFORMS[b.platform].prio);
+  return opts;
+}
+
+function scoreFilm(f,answers,platforms){
+  const avail=primaryAvailability(f,platforms);
+  if(!avail.length) return null;
+  let pts=0,max=0;const reasons=[];
+  for(const q in SCORERS){
+    if(answers[q]==null) continue;
+    const r=SCORERS[q](f,answers[q]);
+    pts+=r.pts;max+=r.max;
+    if(r.reason) reasons.push(r.reason);
+  }
+  const fit=max>0?Math.max(0,Math.min(1,pts/max)):0.5;
+  const plat=PLATFORMS[avail[0].platform];
+  const total=pts+qualityScore(f)+plat.bonus;
+  return {film:f,fit,pts,total,avail,platform:avail[0].platform,reasons};
+}
+
+function rankFilms(answers,platforms,seen){
+  return FILMS.map(f=>scoreFilm(f,answers,platforms))
+    .filter(r=>r&&!seen.includes(r.film.id))
+    .sort((a,b)=> b.total-a.total || PLATFORMS[a.platform].prio-PLATFORMS[b.platform].prio);
+}
+
+/* =====================================================================
+   ZUSTAND
+   ===================================================================== */
+const STORE_KEY="filmabend-quiz-v1";
+const state={
+  path:[],          // beantwortete Fragen in Reihenfolge
+  answers:{},       // q -> Antwort (auch nach "Zurück" für Vorauswahl erhalten)
+  current:null,     // aktuelle Frage
+  seenDraft:[],     // Auswahl in der "schon gesehen"-Frage
+  seen:[],          // bestätigt gesehene Filme
+  platforms:["paramount","netflix","disney","youtube"],
+  view:"start",
+  hasResult:false
+};
+
+function save(){
+  try{localStorage.setItem(STORE_KEY,JSON.stringify(state));}catch(e){/* Speicher nicht verfügbar */}
+}
+function load(){
+  try{
+    const raw=localStorage.getItem(STORE_KEY);
+    if(!raw) return;
+    const s=JSON.parse(raw);
+    if(s&&typeof s==="object"){
+      ["path","answers","current","seenDraft","seen","platforms","view","hasResult"].forEach(k=>{if(k in s) state[k]=s[k];});
+      state.platforms=(state.platforms||[]).filter(p=>p in PLATFORMS);
+      if(!state.platforms.length) state.platforms=Object.keys(PLATFORMS);
+    }
+  }catch(e){/* ungültige Daten ignorieren */}
+}
+
+function activeAnswers(){
+  const a={};
+  state.path.forEach(q=>{ if(q!=="seen") a[q]=state.answers[q]; });
+  return a;
+}
+
+/* ---------- Ablaufsteuerung ---------- */
+function needsHorrorQuestion(a){
+  return a.genre==="spooky"||a.genre==="any"||["dark","nerve","surprise","any"].includes(a.mood)||a.intensity==="3";
+}
+function implicitAnswers(a){
+  // Wird die Horror-Frage übersprungen, gehen wir von "etwas Nervenkitzel ok" aus.
+  const out=Object.assign({},a);
+  if(out.horror==null && a.runtime!=null && !needsHorrorQuestion(a)) out.horror="some";
+  return out;
+}
+
+function attrFor(q,f){
+  if(q==="twist") return f.twist;
+  if(q==="tone") return f.serious;
+  if(q==="era") return f.year>=2015?1:(f.year<2010?-1:0);
+  if(q==="lang") return (f.audioDe?1:0)+(f.origLang!=="en"?1:0);
+  return 0;
+}
+function variance(arr){
+  if(arr.length<2) return 0;
+  const m=arr.reduce((s,x)=>s+x,0)/arr.length;
+  return arr.reduce((s,x)=>s+(x-m)*(x-m),0)/arr.length;
+}
+
+function isConvincing(ranking){
+  if(ranking.length<3) return true;
+  const [a,,c]=ranking;
+  return a.fit>=0.72 && (a.total-c.total)>=5;
+}
+
+function pickFollowup(ranking,asked){
+  const top=ranking.slice(0,6).map(r=>r.film);
+  let best=null,bestVar=0.05;
+  FOLLOWUPS.forEach(q=>{
+    if(asked.includes(q)) return;
+    const v=variance(top.map(f=>attrFor(q,f)));
+    if(v>bestVar){bestVar=v;best=q;}
+  });
+  return best;
+}
+
+function nextQuestion(){
+  const a=activeAnswers();
+  const p=state.path;
+  if(!p.includes("mood")) return "mood";
+  if(!p.includes("genre")) return "genre";
+  if(!p.includes("intensity")) return "intensity";
+  if(!p.includes("horror") && needsHorrorQuestion(a)) return "horror";
+  if(!p.includes("runtime")) return "runtime";
+  if(p.includes("seen")) return null;
+  const asked=p.filter(q=>FOLLOWUPS.includes(q));
+  if(asked.length<MAX_FOLLOWUPS){
+    const ranking=rankFilms(implicitAnswers(a),state.platforms,[]);
+    if(!isConvincing(ranking)){
+      const f=pickFollowup(ranking,asked);
+      if(f) return f;
+    }
+  }
+  return "seen";
+}
+
+function plannedTotal(){
+  const a=activeAnswers();
+  let n=4; // mood, genre, intensity, runtime
+  if(state.path.includes("genre")){ if(needsHorrorQuestion(a)||state.path.includes("horror")) n++; }
+  else n++; // vor Frage 2 noch unklar -> mit 6 rechnen
+  const fu=state.path.filter(q=>FOLLOWUPS.includes(q)).length+(FOLLOWUPS.includes(state.current)?1:0);
+  return n+fu+1; // +1 für "schon gesehen"
+}
+
+/* =====================================================================
+   RENDERING
+   ===================================================================== */
+const $=(s)=>document.querySelector(s);
+const esc=(s)=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const reduceMotion=()=>window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function fmtRuntime(m){const h=Math.floor(m/60),r=m%60;return h?`${h} h${r?" "+r+" min":""}`:`${r} min`;}
+function fmtDate(iso){const [y,m,d]=iso.split("-");return `${d}.${m}.${y}`;}
+
+function showScreen(name){
+  ["start","quiz","result"].forEach(n=>{ $("#screen-"+n).hidden = n!==name; });
+  $("#wrap").classList.toggle("wide",name==="result");
+  state.view=name;
+  save();
+  window.scrollTo(0,0);
+}
+
+function toast(msg){
+  const t=$("#toast");t.textContent=msg;t.classList.add("show");
+  clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove("show"),2200);
+}
+
+/* ---------- Start ---------- */
+function renderPlatformChips(){
+  const wrap=$("#platform-chips");
+  wrap.innerHTML="";
+  Object.keys(PLATFORMS).sort((a,b)=>PLATFORMS[a].prio-PLATFORMS[b].prio).forEach(k=>{
+    const on=state.platforms.includes(k);
+    const b=document.createElement("button");
+    b.type="button";b.className="chip";b.setAttribute("aria-pressed",String(on));
+    b.innerHTML=`<span class="tick" aria-hidden="true">${on?"✓":""}</span>${PLATFORMS[k].prio}. ${esc(PLATFORMS[k].name)}`;
+    b.addEventListener("click",()=>{
+      const sel=state.platforms.includes(k);
+      if(sel && state.platforms.length===1){toast("Mindestens eine Plattform muss aktiv sein.");return;}
+      state.platforms= sel? state.platforms.filter(x=>x!==k) : state.platforms.concat(k);
+      save();renderPlatformChips();
+    });
+    wrap.appendChild(b);
+  });
+}
+function renderStart(){
+  renderPlatformChips();
+  $("#resume-wrap").hidden=!state.hasResult;
+  showScreen("start");
+  $("#start-title").focus({preventScroll:true});
+}
+
+/* ---------- Quiz ---------- */
+function resolve(v){return typeof v==="function"?v(activeAnswers()):v;}
+
+function renderQuestion(){
+  const qid=state.current;
+  const q=QUESTIONS[qid];
+  const total=plannedTotal();
+  const num=state.path.length+1;
+  $("#q-counter").textContent=`Frage ${num} von ${total}`;
+  const pct=Math.round(((num-1)/total)*100);
+  $("#progress-bar").style.width=pct+"%";
+  $("#progress").setAttribute("aria-valuenow",String(pct));
+  $("#btn-back").hidden=state.path.length===0;
+
+  const area=$("#q-area");
+  let html="";
+  if(q.followup) html+=`<span class="badge">Zusatzfrage</span>`;
+  html+=`<h2 class="q-title" id="q-title" tabindex="-1">${esc(resolve(q.title))}</h2>`;
+  html+=`<p class="q-sub">${esc(resolve(q.sub))}</p>`;
+
+  if(q.multi){
+    const ranking=rankFilms(implicitAnswers(activeAnswers()),state.platforms,state.seen).slice(0,8);
+    html+=`<div class="options two-col" role="group" aria-label="Filme, die ihr schon gesehen habt">`;
+    ranking.forEach(r=>{
+      const on=state.seenDraft.includes(r.film.id);
+      html+=`<button type="button" class="option" data-film="${esc(r.film.id)}" aria-pressed="${on}">
+        <span><span class="lbl">${esc(r.film.title)}</span><span class="desc">${r.film.year} · ${esc(PLATFORMS[r.platform].name)}</span></span>
+        <span class="check" aria-hidden="true">${on?"✓":""}</span></button>`;
+    });
+    html+=`</div><p class="q-note">${esc(q.note)}</p>`;
+    $("#btn-next").hidden=false;
+    $("#btn-next").textContent="Ergebnis zeigen";
+  }else{
+    const opts=resolve(q.options);
+    html+=`<div class="options${q.twoCol?" two-col":""}" role="group" aria-labelledby="q-title">`;
+    opts.forEach(o=>{
+      const on=state.answers[qid]===o.v;
+      html+=`<button type="button" class="option" data-v="${esc(o.v)}" aria-pressed="${on}">
+        <span class="emo" aria-hidden="true">${o.e||""}</span>
+        <span><span class="lbl">${esc(o.l)}</span>${o.d?`<span class="desc">${esc(o.d)}</span>`:""}</span></button>`;
+    });
+    html+=`</div>`;
+    $("#btn-next").hidden=true;
+  }
+  area.innerHTML=html;
+
+  area.querySelectorAll(".option").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      if(q.multi){
+        const id=btn.dataset.film;
+        state.seenDraft= state.seenDraft.includes(id)? state.seenDraft.filter(x=>x!==id) : state.seenDraft.concat(id);
+        const on=state.seenDraft.includes(id);
+        btn.setAttribute("aria-pressed",String(on));
+        btn.querySelector(".check").textContent=on?"✓":"";
+        save();
+      }else{
+        area.querySelectorAll(".option").forEach(b=>b.setAttribute("aria-pressed","false"));
+        btn.setAttribute("aria-pressed","true");
+        answer(qid,btn.dataset.v);
+      }
+    });
+  });
+
+  area.classList.remove("screen");void area.offsetWidth;area.classList.add("screen");
+  $("#q-title").focus({preventScroll:true});
+}
+
+let advancing=false;
+function answer(qid,v){
+  if(advancing) return;
+  advancing=true;
+  state.answers[qid]=v;
+  state.path.push(qid);
+  save();
+  setTimeout(()=>{advancing=false;goNext();}, reduceMotion()?0:170);
+}
+
+function goNext(){
+  const n=nextQuestion();
+  if(n==="seen"||n==null){
+    if(n==null){ showResult(); return; }
+  }
+  state.current=n;
+  save();
+  renderQuestion();
+}
+
+function goBack(){
+  if(!state.path.length){renderStart();return;}
+  const prev=state.path.pop();
+  if(prev==="seen"){ state.seen=[]; }
+  state.current=prev;
+  state.hasResult=false;
+  save();
+  showScreen("quiz");
+  renderQuestion();
+}
+
+function startQuiz(){
+  state.path=[];state.answers={};state.seen=[];state.seenDraft=[];state.hasResult=false;
+  state.current="mood";
+  save();
+  showScreen("quiz");
+  renderQuestion();
+}
+
+function finishSeen(){
+  state.seen=state.seenDraft.slice();
+  if(!state.path.includes("seen")) state.path.push("seen");
+  showResult();
+}
+
+/* ---------- Ergebnis ---------- */
+const REASON_TEXT={
+  intensity:(f)=>["ist angenehm entspannt anzuschauen","hält die Spannung auf einem guten Mittelmass","packt richtig zu"][f.intensity-1],
+  noHorror:()=>"kommt ohne Horror-Schocks aus",
+  someHorror:()=>"bietet etwas Nervenkitzel, ohne in Horror abzurutschen",
+  yesHorror:()=>"liefert die gewünschte Portion Grusel",
+  runtime:(f)=>`passt mit ${fmtRuntime(f.runtime)} gut in euren Abend`,
+  twist:()=>"lebt von einer starken Wendung",
+  twistSome:()=>"hält die eine oder andere Überraschung bereit",
+  light:()=>"bleibt thematisch angenehm leicht",
+  serious:()=>"traut sich auch an ernstere Themen",
+  new:(f)=>`ist aus dem Jahr ${f.year} und damit angenehm frisch`,
+  classic:(f)=>`ist ein Klassiker von ${f.year}`,
+  audioDe:()=>"hat laut JustWatch CH auf unserer Plattform eine deutsche Tonspur",
+  ov:()=>"lohnt sich besonders im Originalton"
+};
+function joinDe(parts){
+  if(parts.length<=1) return parts.join("");
+  return parts.slice(0,-1).join(", ")+" und "+parts[parts.length-1];
+}
+function whyText(r,answers){
+  const f=r.film;
+  const keys=r.reasons.slice().sort((a,b)=>b.w-a.w).map(x=>x.k);
+  const lead=[];
+  if(keys.includes("mood")) lead.push(`„${LABELS.mood[answers.mood]}“`);
+  if(keys.includes("genre")) lead.push(`„${LABELS.genre[answers.genre]}“`);
+  let s1="";
+  if(lead.length) s1=`Ihr wolltet es ${joinDe(lead)} – genau das liefert dieser Film.`;
+  const rest=keys.filter(k=>REASON_TEXT[k]).slice(0,lead.length?2:3).map(k=>REASON_TEXT[k](f));
+  let s2="";
+  if(rest.length) s2=`Er ${joinDe(rest)}.`;
+  if(!s1&&!s2) s2=`Er ist unter euren Vorgaben der stimmigste Kompromiss und mit IMDb ${f.imdb.toFixed(1)} gut bewertet.`;
+  return (s1+" "+s2).trim();
+}
+function shortWhy(r,answers){
+  const f=r.film;
+  const k=r.reasons.slice().sort((a,b)=>b.w-a.w).map(x=>x.k);
+  const bits=[];
+  if(k.includes("mood")) bits.push(LABELS.mood[answers.mood]);
+  if(k.includes("genre")) bits.push(LABELS.genre[answers.genre]);
+  if(k.includes("noHorror")) bits.push("ohne Horror");
+  if(k.includes("yesHorror")) bits.push("schön gruselig");
+  if(k.includes("twist")) bits.push("mit Wendung");
+  if(k.includes("runtime")) bits.push(fmtRuntime(f.runtime));
+  return bits.length? "Passt, weil: "+bits.slice(0,4).join(" · ") : "Solide Alternative mit ähnlicher Stimmung.";
+}
+
+function availType(a){
+  if(a.platform==="youtube"){
+    if(a.type==="free") return "kostenlos auf YouTube";
+    if(a.type==="rent") return "zum Ausleihen"+(a.price?` (${a.price})`:"");
+    if(a.type==="buy") return "zum Kaufen"+(a.price?` (${a.price})`:"");
+  }
+  return "im Abo enthalten";
+}
+function watchLink(f,a){
+  if(a.url) return a.url;
+  if(a.platform==="netflix") return "https://www.netflix.com/search?q="+encodeURIComponent(f.originalTitle||f.title);
+  return "https://www.justwatch.com/ch/Film/"+encodeURIComponent(f.justwatch);
+}
+function jwLink(f){return "https://www.justwatch.com/ch/Film/"+encodeURIComponent(f.justwatch);}
+
+function platformNote(main,answers){
+  const p=PLATFORMS[main.platform].prio;
+  const higher=state.platforms.filter(k=>PLATFORMS[k].prio<p).sort((a,b)=>PLATFORMS[a].prio-PLATFORMS[b].prio);
+  if(!higher.length) return "";
+  const ranking=rankFilms(answers,state.platforms,state.seen);
+  const parts=[];
+  higher.forEach(k=>{
+    const best=ranking.find(r=>r.platform===k);
+    if(best) parts.push(`${PLATFORMS[k].name} (bester Treffer: ${best.film.title}, ${Math.round(best.fit*100)} %)`);
+    else parts.push(`${PLATFORMS[k].name} (kein passender Film in der Auswahl)`);
+  });
+  if(!parts.length) return "";
+  return `Warum ${PLATFORMS[main.platform].name}? Auf ${joinDe(parts)} passte heute nichts ähnlich gut zu euren Antworten.`;
+}
+
+function ratingsHtml(f){
+  const bits=[`IMDb <b>${f.imdb.toFixed(1)}</b>/10`];
+  if(f.rt!=null) bits.push(`Rotten Tomatoes <b>${f.rt} %</b>`);
+  return `<p class="ratings">${bits.join(" · ")}</p>`;
+}
+
+function filmCard(r,answers,isMain){
+  const f=r.film;
+  const prim=r.avail[0];
+  const plat=PLATFORMS[prim.platform];
+  const also=r.avail.slice(1).map(a=>PLATFORMS[a.platform].name);
+  const meta=[`<span>${f.year}</span>`,`<span>${esc(f.genreLabel)}</span>`,`<span>${fmtRuntime(f.runtime)}</span>`];
+  if(f.fsk!=null) meta.push(`<span>FSK ${f.fsk}</span>`);
+  const trailerBtn = f.trailerId
+    ? `<button type="button" class="btn btn-ghost btn-small" data-trailer="${esc(f.trailerId)}" data-title="${esc(f.title)}" aria-expanded="false">▶ Trailer ansehen</button>`
+    : `<a class="btn btn-ghost btn-small" href="https://www.youtube.com/results?search_query=${encodeURIComponent(f.title+" "+f.year+" offizieller Trailer")}" target="_blank" rel="noopener">▶ Trailer auf YouTube suchen</a>`;
+  const note = isMain? platformNote(r,answers) : "";
+  return `
+  <article class="card ${isMain?"card-main":"card-alt"}" aria-labelledby="t-${esc(f.id)}">
+    <div class="card-body">
+      <div class="ribbon">
+        <span class="pill ${plat.cls}">${esc(plat.name)}</span>
+        <span class="match">${Math.round(r.fit*100)} % Passung</span>
+      </div>
+      <h${isMain?2:3} class="title" id="t-${esc(f.id)}">${esc(f.title)}</h${isMain?2:3}>
+      ${f.originalTitle?`<p class="orig">Originaltitel: ${esc(f.originalTitle)}</p>`:""}
+      <div class="meta">${meta.join("")}</div>
+      <p class="desc">${esc(f.desc)}</p>
+      <div class="why">${isMain?`<strong>Darum passt er zu euch</strong>${esc(whyText(r,answers))}`:esc(shortWhy(r,answers))}</div>
+      ${note?`<p class="platform-note">${esc(note)}</p>`:""}
+      <div class="avail"><span class="avail-type">${esc(plat.name)} · ${esc(availType(prim))}${also.length?` · auch auf ${esc(also.join(", "))}`:""}</span></div>
+      ${ratingsHtml(f)}
+      <p class="small">Bewertungen: ${RATING_SOURCE}, abgerufen am ${fmtDate(CHECKED)} – sie können sich ändern.${f.fsk!=null?" Altersfreigabe laut JustWatch CH.":""}</p>
+      <p class="small">Verfügbarkeit zuletzt geprüft am ${fmtDate(f.availabilityChecked)}${f.audioDe?" · deutsche Tonspur bestätigt":""}</p>
+      <div class="actions">
+        <a class="btn btn-primary btn-small" href="${esc(watchLink(f,prim))}" target="_blank" rel="noopener">Jetzt auf ${esc(plat.name)} ansehen</a>
+        ${trailerBtn}
+      </div>
+      ${prim.platform!=="netflix"&&!prim.url?`<p class="small" style="margin-top:.6rem">Der Link führt über die Schweizer JustWatch-Seite zum Angebot.</p>`:""}
+      <div class="trailer" hidden></div>
+      ${isMain?`<div style="margin-top:.8rem;text-align:center"><button type="button" class="link-btn" data-seen="${esc(f.id)}">Kennen wir schon – anderer Vorschlag</button></div>`:""}
+    </div>
+  </article>`;
+}
+
+function showResult(){
+  const answers=implicitAnswers(activeAnswers());
+  const ranking=rankFilms(answers,state.platforms,state.seen);
+  state.hasResult=true;
+  state.current=null;
+  showScreen("result");
+  const area=$("#res-area");
+  if(!ranking.length){
+    area.innerHTML=`<div class="empty"><h1 id="res-title" tabindex="-1">Keine Treffer mehr</h1>
+      <p>Mit euren Plattformen und den bereits gesehenen Filmen bleibt in unserer Auswahl nichts übrig.</p>
+      <button type="button" class="btn btn-primary" id="btn-restart-empty">Quiz neu starten</button></div>`;
+    $("#btn-restart-empty").addEventListener("click",restart);
+    $("#res-title").focus({preventScroll:true});
+    return;
+  }
+  const [main,...rest]=ranking;
+  const alts=rest.slice(0,2);
+  const weak=main.fit<0.6;
+  area.innerHTML=`
+    <header class="res-head">
+      <p class="kicker">Euer Film für heute</p>
+      <h1 id="res-title" tabindex="-1">Popcorn bereit? Das hier passt.</h1>
+      ${weak?`<p class="small" style="margin-top:.6rem">Eure Wünsche waren heute anspruchsvoll – das ist der beste Kompromiss aus unserer Auswahl.</p>`:""}
+    </header>
+    <div class="result-grid">
+      <div>${filmCard(main,answers,true)}</div>
+      <div>
+        ${alts.length?`<h2 class="alts-title">Zwei Alternativen</h2><div class="alts">${alts.map(r=>filmCard(r,answers,false)).join("")}</div>`:""}
+      </div>
+    </div>
+    <div class="res-foot">
+      <details class="info">
+        <summary>Wie kommt die Empfehlung zustande?</summary>
+        <p>Jeder Film bekommt Punkte für Stimmung, Genre, Intensität, Horror-Anteil, Laufzeit und – falls gefragt – Wendung, Tonfall, Erscheinungsjahr oder Sprache. „Passung“ zeigt, wie viele der möglichen Punkte ein Film erreicht.</p>
+        <p>Dazu kommt ein kleiner Qualitätsbonus aus der IMDb-Wertung. Die Plattform zählt nur als Feinabstimmung (Paramount+ vor Netflix vor Disney+ vor YouTube), damit Verfügbarkeit allein keinen Film nach vorne bringt. Bereits gesehene Filme werden nicht vorgeschlagen.</p>
+      </details>
+      <details class="info">
+        <summary>Hinweise zu Daten und Verfügbarkeit</summary>
+        <ul>
+          <li>Verfügbarkeit, Laufzeit, Altersfreigabe und Bewertungen wurden am ${fmtDate(CHECKED)} auf JustWatch Schweiz geprüft. Diese Seite aktualisiert sich nicht automatisch – Angebote können sich inzwischen geändert haben.</li>
+          <li>YouTube: JustWatch CH listet für keinen Film dieser Auswahl ein YouTube-Angebot. Kostenlose, Leih- oder Kaufangebote auf YouTube wurden deshalb nicht eingetragen und es werden keine Preise angezeigt.</li>
+          <li>Untertitel wurden nicht geprüft. Deutsche Tonspuren nur dort, wo JustWatch CH sie ausdrücklich listet.</li>
+          <li>Trailer werden nur eingebettet, wenn das Video als offizieller Trailer auf dem Kanal des Studios bestätigt ist; sonst öffnet sich eine YouTube-Suche. Eingebettet wird über youtube-nocookie.com, erst nach eurem Klick und ohne Autoplay.</li>
+        </ul>
+      </details>
+      <button type="button" class="btn btn-ghost btn-block" id="btn-back-result">← Antworten ändern</button>
+      <button type="button" class="btn btn-primary btn-block" id="btn-restart">Quiz neu starten</button>
+    </div>`;
+
+  area.querySelectorAll("[data-trailer]").forEach(b=>b.addEventListener("click",()=>toggleTrailer(b)));
+  area.querySelectorAll("[data-seen]").forEach(b=>b.addEventListener("click",()=>{
+    state.seen=state.seen.concat(b.dataset.seen);
+    if(!state.seenDraft.includes(b.dataset.seen)) state.seenDraft.push(b.dataset.seen);
+    save();
+    showResult();
+    toast("Alles klar – hier ist ein anderer Vorschlag.");
+  }));
+  $("#btn-restart").addEventListener("click",restart);
+  $("#btn-back-result").addEventListener("click",goBack);
+  save();
+  $("#res-title").focus({preventScroll:true});
+}
+
+function toggleTrailer(btn){
+  const box=btn.closest(".card-body").querySelector(".trailer");
+  const open=btn.getAttribute("aria-expanded")==="true";
+  if(open){
+    box.innerHTML="";box.hidden=true;
+    btn.setAttribute("aria-expanded","false");btn.textContent="▶ Trailer ansehen";
+    return;
+  }
+  const id=btn.dataset.trailer;
+  const title=btn.dataset.title;
+  // Kein autoplay-Parameter: Das Video startet erst, wenn ihr im Player auf Play drückt.
+  box.innerHTML=`<div class="trailer-frame"><iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}?rel=0"
+      title="Offizieller Trailer: ${esc(title)}" loading="lazy"
+      allow="encrypted-media; picture-in-picture; fullscreen" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>
+    <p class="small">Wird „Video nicht verfügbar“ angezeigt? Manche Trailer dürfen nicht eingebettet werden –
+      <a href="https://www.youtube.com/watch?v=${encodeURIComponent(id)}" target="_blank" rel="noopener">Trailer direkt auf YouTube öffnen</a>.</p>`;
+  box.hidden=false;
+  btn.setAttribute("aria-expanded","true");btn.textContent="✕ Trailer schliessen";
+}
+
+function restart(){
+  state.path=[];state.answers={};state.seen=[];state.seenDraft=[];state.current=null;state.hasResult=false;
+  save();
+  startQuiz();
+}
+
+/* ---------- Init ---------- */
+function init(){
+  load();
+  $("#btn-start").addEventListener("click",startQuiz);
+  $("#btn-resume").addEventListener("click",showResult);
+  $("#btn-back").addEventListener("click",goBack);
+  $("#btn-restart-quiz").addEventListener("click",restart);
+  $("#btn-next").addEventListener("click",()=>{ if(state.current==="seen") finishSeen(); });
+  if(state.view==="quiz"&&state.current&&QUESTIONS[state.current]){showScreen("quiz");renderQuestion();}
+  else if(state.view==="result"&&state.hasResult){showResult();}
+  else renderStart();
+}
+init();
+</script>
+</body>
+</html>
